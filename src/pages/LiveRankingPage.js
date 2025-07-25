@@ -39,11 +39,11 @@ function LiveRankingPage() {
     fetchData();
   }, []);
 
-  // 自动刷新功能，每30秒刷新一次数据
+  // 自动刷新功能，每5min刷新一次数据
   useEffect(() => {
     const interval = setInterval(() => {
       fetchData();
-    }, 30000); // 30秒
+    }, 300000); // 5min
     return () => clearInterval(interval);
   }, []);
 
@@ -187,7 +187,7 @@ function LiveRankingPage() {
   const fetchTodayMoments = async () => {
     // 获取当前时间和12小时前的时间
     const now = new Date();
-    const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+    const twelveHoursAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
 
     const { data: momentsData, error } = await supabase
       .from('moments')
