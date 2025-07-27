@@ -18,23 +18,26 @@ DROP TABLE IF EXISTS friendships CASCADE;
 DROP TABLE IF EXISTS attribute_history CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
--- 删除现有函数
-DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
-DROP FUNCTION IF EXISTS record_attribute_change() CASCADE;
-DROP FUNCTION IF EXISTS add_friendship(UUID, UUID, TEXT) CASCADE;
-DROP FUNCTION IF EXISTS get_user_friends(UUID) CASCADE;
-DROP FUNCTION IF EXISTS get_friendship_stats() CASCADE;
-DROP FUNCTION IF EXISTS get_moments_by_date(DATE) CASCADE;
-DROP FUNCTION IF EXISTS create_moment(UUID, VARCHAR(200), TEXT, TEXT, UUID[]) CASCADE;
-DROP FUNCTION IF EXISTS get_moments_stats() CASCADE;
-DROP FUNCTION IF EXISTS get_moment_dates() CASCADE;
-DROP FUNCTION IF EXISTS get_daily_attribute_stats(DATE) CASCADE;
-DROP FUNCTION IF EXISTS get_daily_group_stats(DATE) CASCADE;
-DROP FUNCTION IF EXISTS get_disciple_group(VARCHAR(50)) CASCADE;
-DROP FUNCTION IF EXISTS get_disciple_initial_values(VARCHAR(50)) CASCADE;
-DROP FUNCTION IF EXISTS get_moment_image_url(TEXT) CASCADE;
-DROP FUNCTION IF EXISTS get_avatar_url(TEXT) CASCADE;
-DROP FUNCTION IF EXISTS get_disciple_badge_url(TEXT) CASCADE;
+DO $$
+DECLARE
+  drop_stmt text;
+BEGIN
+  FOR drop_stmt IN
+    SELECT 
+      'DROP FUNCTION IF EXISTS "' || n.nspname || '"."' || p.proname || '"(' ||
+      pg_get_function_identity_arguments(p.oid) || ') CASCADE;'
+    FROM 
+      pg_proc p
+      JOIN pg_namespace n ON p.pronamespace = n.oid
+    WHERE 
+      n.nspname = 'public'
+      AND p.prokind = 'f'  -- 函数（非过程或聚合）
+  LOOP
+    RAISE NOTICE 'Executing: %', drop_stmt;
+    EXECUTE drop_stmt;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
 
 -- ================================================================
 -- 第二步：创建基础函数
@@ -158,7 +161,7 @@ CREATE INDEX idx_friendships_created_at ON friendships(created_at);
 
 CREATE TABLE moments (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(200) NOT NULL,
     content TEXT,
     image_url TEXT,
@@ -750,11 +753,10 @@ END $$;
 -- ================================================================
 
 CREATE OR REPLACE FUNCTION create_moment(
-  creator_user_id uuid,
-  mentioned_user_ids uuid[],
+  moment_title text,
   moment_content text,
   moment_image_url text,
-  moment_title text
+  mentioned_user_ids uuid[]
 )
 RETURNS void
 LANGUAGE plpgsql
@@ -764,7 +766,7 @@ DECLARE
 BEGIN
   -- 1. 插入 moment，并获取 id
   INSERT INTO moments (user_id, content, image_url, title)
-  VALUES (creator_user_id, moment_content, moment_image_url, moment_title)
+  VALUES (NULL, moment_content, moment_image_url, moment_title)
   RETURNING id INTO new_moment_id;
 
   -- 2. 插入 @提及

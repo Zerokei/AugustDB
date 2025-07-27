@@ -89,7 +89,7 @@ function MomentsPageSimple() {
           image_url,
           created_at,
           updated_at,
-          users!inner(name, disciple, gender)
+          users(name, disciple, gender)
         `)
         .gte('created_at', twelveHoursAgo.toISOString())
         .lte('created_at', now.toISOString())
@@ -115,9 +115,9 @@ function MomentsPageSimple() {
           return {
             moment_id: moment.id,
             user_id: moment.user_id,
-            user_name: moment.users.name,
-            user_disciple: moment.users.disciple,
-            user_gender: moment.users.gender,
+            user_name: moment.users?.name || '匿名用户',
+            user_disciple: moment.users?.disciple || '未知',
+            user_gender: moment.users?.gender || '未知',
             title: moment.title,
             content: moment.content,
             image_url: moment.image_url,
@@ -288,12 +288,9 @@ function MomentsPageSimple() {
       // 使用简化的create_moment函数
       const mentionedUserIds = formData.mentionedUsers.map(u => u.id);
 
-      // 模拟用户ID（实际应用中应该从认证系统获取）
-      const currentUserId = users[0]?.id; // 暂时使用第一个用户
 
       const { error } = await supabase
         .rpc('create_moment', {
-          creator_user_id: currentUserId,
           moment_title: formData.title.trim(),
           moment_content: formData.content.trim() || null,
           moment_image_url: imageUrl,
