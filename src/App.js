@@ -49,7 +49,7 @@ function App() {
             <Route path="/register" element={<RegistrationPage />} />
             <Route path="/attributes" element={<AttributePage />} />
             <Route path="/friendship" element={<FriendshipPage />} />
-            <Route path="/ranking/live" element={<LiveRankingPage />} />
+            <Route path="/ranking" element={<LiveRankingPage />} />
             <Route path="/moments" element={<MomentsPage />} />
           </Routes>
         </div>

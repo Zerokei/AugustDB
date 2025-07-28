@@ -222,7 +222,7 @@ function HomePage({ onLogout }) {
               朋友结交
             </Link>
             
-            <Link to="/ranking/live" className="btn btn-secondary">
+            <Link to="/ranking" className="btn btn-secondary">
               <Play size={20} />
               日常滚榜
             </Link>
