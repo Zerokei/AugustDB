@@ -13,7 +13,7 @@ export const DISCIPLE_CONFIG = {
     initialValues: {
       courage: 0,
       faith: 0,
-      wisdom: 10
+      wisdom: 0
     }
   },
   '约翰': {
@@ -22,7 +22,7 @@ export const DISCIPLE_CONFIG = {
     initialValues: {
       courage: 0,
       faith: 0,
-      wisdom: 10
+      wisdom: 0
     }
   },
   '腓力': {
@@ -31,7 +31,7 @@ export const DISCIPLE_CONFIG = {
     initialValues: {
       courage: 0,
       faith: 0,
-      wisdom: 9
+      wisdom: 0
     }
   },
   '加略人犹大': {
@@ -40,7 +40,7 @@ export const DISCIPLE_CONFIG = {
     initialValues: {
       courage: 0,
       faith: 0,
-      wisdom: 9
+      wisdom: 0
     }
   },
   
@@ -49,7 +49,7 @@ export const DISCIPLE_CONFIG = {
     group: DISCIPLE_GROUPS.COURAGE,
     primaryAttribute: 'courage',
     initialValues: {
-      courage: 10,
+      courage: 0,
       faith: 0,
       wisdom: 0
     }
@@ -58,7 +58,7 @@ export const DISCIPLE_CONFIG = {
     group: DISCIPLE_GROUPS.COURAGE,
     primaryAttribute: 'courage',
     initialValues: {
-      courage: 9,
+      courage: 0,
       faith: 0,
       wisdom: 0
     }
@@ -67,7 +67,7 @@ export const DISCIPLE_CONFIG = {
     group: DISCIPLE_GROUPS.COURAGE,
     primaryAttribute: 'courage',
     initialValues: {
-      courage: 10,
+      courage: 0,
       faith: 0,
       wisdom: 0
     }
@@ -76,7 +76,7 @@ export const DISCIPLE_CONFIG = {
     group: DISCIPLE_GROUPS.COURAGE,
     primaryAttribute: 'courage',
     initialValues: {
-      courage: 9,
+      courage: 0,
       faith: 0,
       wisdom: 0
     }
@@ -97,7 +97,7 @@ export const DISCIPLE_CONFIG = {
     primaryAttribute: 'faith',
     initialValues: {
       courage: 0,
-      faith: 10,
+      faith: 0,
       wisdom: 0
     }
   },
@@ -106,7 +106,7 @@ export const DISCIPLE_CONFIG = {
     primaryAttribute: 'faith',
     initialValues: {
       courage: 0,
-      faith: 8,
+      faith: 0,
       wisdom: 0
     }
   },
@@ -115,7 +115,7 @@ export const DISCIPLE_CONFIG = {
     primaryAttribute: 'faith',
     initialValues: {
       courage: 0,
-      faith: 9,
+      faith: 0,
       wisdom: 0
     }
   }

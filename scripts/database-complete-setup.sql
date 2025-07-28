@@ -229,20 +229,20 @@ RETURNS TABLE(courage INTEGER, faith INTEGER, wisdom INTEGER) AS $$
 BEGIN
     CASE disciple_name
         -- 智力用户组
-        WHEN '马太' THEN RETURN QUERY SELECT 0, 0, 10;
-        WHEN '约翰' THEN RETURN QUERY SELECT 0, 0, 10;
-        WHEN '腓力' THEN RETURN QUERY SELECT 0, 0, 9;
-        WHEN '加略人犹大' THEN RETURN QUERY SELECT 0, 0, 9;
+        WHEN '马太' THEN RETURN QUERY SELECT 0, 0, 0;
+        WHEN '约翰' THEN RETURN QUERY SELECT 0, 0, 0;
+        WHEN '腓力' THEN RETURN QUERY SELECT 0, 0, 0;
+        WHEN '加略人犹大' THEN RETURN QUERY SELECT 0, 0, 0;
         -- 勇气用户组
-        WHEN '彼得' THEN RETURN QUERY SELECT 10, 0, 0;
-        WHEN '雅各（西庇太）' THEN RETURN QUERY SELECT 9, 0, 0;
-        WHEN '西门（奋锐党）' THEN RETURN QUERY SELECT 10, 0, 0;
-        WHEN '巴多罗买' THEN RETURN QUERY SELECT 9, 0, 0;
+        WHEN '彼得' THEN RETURN QUERY SELECT 0, 0, 0;
+        WHEN '雅各（西庇太）' THEN RETURN QUERY SELECT 0, 0, 0;
+        WHEN '西门（奋锐党）' THEN RETURN QUERY SELECT 0, 0, 0;
+        WHEN '巴多罗买' THEN RETURN QUERY SELECT 0, 0, 0;
         -- 信心用户组
-        WHEN '多马' THEN RETURN QUERY SELECT 0, 9, 0;
-        WHEN '安德烈' THEN RETURN QUERY SELECT 0, 10, 0;
-        WHEN '达太' THEN RETURN QUERY SELECT 0, 8, 0;
-        WHEN '雅各（亚勒腓）' THEN RETURN QUERY SELECT 0, 9, 0;
+        WHEN '多马' THEN RETURN QUERY SELECT 0, 0, 0;
+        WHEN '安德烈' THEN RETURN QUERY SELECT 0, 0, 0;
+        WHEN '达太' THEN RETURN QUERY SELECT 0, 0, 0;
+        WHEN '雅各（亚勒腓）' THEN RETURN QUERY SELECT 0, 0, 0;
         ELSE
             RETURN QUERY SELECT 0, 0, 0;
     END CASE;
