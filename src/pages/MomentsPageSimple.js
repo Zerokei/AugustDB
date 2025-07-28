@@ -68,15 +68,7 @@ function MomentsPageSimple() {
   const fetchMomentsByDate = async () => {
     try {
       setLoading(true);
-      // 计算12小时前的时间
       const now = new Date();
-      const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000);
-
-      // 自动删除超过12小时的动态
-      await supabase
-        .from('moments')
-        .delete()
-        .lt('created_at', twelveHoursAgo.toISOString());
 
       // 查询12小时内的动态
       const { data: momentsData, error } = await supabase
@@ -91,8 +83,6 @@ function MomentsPageSimple() {
           updated_at,
           users(name, disciple, gender)
         `)
-        .gte('created_at', twelveHoursAgo.toISOString())
-        .lte('created_at', now.toISOString())
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -318,25 +308,6 @@ function MomentsPageSimple() {
       setMessage({ type: 'error', text: '发布失败：' + error.message });
     } finally {
       setUploading(false);
-    }
-  };
-
-  // 删除动态
-  const handleDeleteMoment = async (momentId) => {
-    if (!window.confirm('确定要删除这条动态吗？')) return;
-    try {
-      setLoading(true);
-      const { error } = await supabase
-        .from('moments')
-        .delete()
-        .eq('id', momentId);
-      if (error) throw error;
-      setMessage({ type: 'success', text: '动态已删除' });
-      fetchMomentsByDate();
-    } catch (error) {
-      setMessage({ type: 'error', text: '删除失败：' + error.message });
-    } finally {
-      setLoading(false);
     }
   };
 
