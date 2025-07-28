@@ -104,7 +104,7 @@ function LiveRankingPage() {
       .gt(attribute, 0)
       .order(attribute, { ascending: false })
       .limit(10);
-    if (topTenError) return;
+    if (topTenError) throw topTenError;
     if (!topTen || topTen.length === 0) {
       setRankings(prev => ({ ...prev, [attribute]: [] }));
       return;
@@ -120,7 +120,7 @@ function LiveRankingPage() {
       .gte(attribute, tenthScore)
       .gt(attribute, 0)
       .order(attribute, { ascending: false });
-    if (error) return;
+    if (error) throw error;
     setRankings(prev => ({ ...prev, [attribute]: allData || [] }));
   };
 
@@ -129,11 +129,11 @@ function LiveRankingPage() {
     const { data: users, error: usersError } = await supabase
       .from('users')
       .select('id, name, disciple, gender, team_group');
-    if (usersError) return;
+    if (usersError) throw usersError;
     const { data: friendships, error: friendshipsError } = await supabase
       .from('friendships')
       .select('user1_id, user2_id');
-    if (friendshipsError) return;
+    if (friendshipsError) throw friendshipsError;
     const friendCounts = {};
     users.forEach(user => { friendCounts[user.id] = 0; });
     friendships.forEach(friendship => {
