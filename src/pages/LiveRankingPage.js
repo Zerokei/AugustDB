@@ -187,7 +187,7 @@ function LiveRankingPage() {
   const fetchTodayMoments = async () => {
     // 获取当前时间和12小时前的时间
     const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000); // 改为12小时
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000); // 改为12小时
 
 
     const { data: momentsData, error } = await supabase
@@ -201,7 +201,7 @@ function LiveRankingPage() {
         created_at,
         users(name, disciple, gender)
       `)
-      .gte('created_at', oneHourAgo.toISOString())
+      .gte('created_at', twoHoursAgo.toISOString())
       .lte('created_at', now.toISOString())
       .order('created_at', { ascending: false });
     if (error) throw error;
