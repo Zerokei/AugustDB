@@ -556,81 +556,118 @@ ON CONFLICT (id) DO UPDATE SET
     name = 'disciple-badges',
     public = true;
 
+-- 创建朋友圈图片存储桶（用于前端上传）
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('images', 'images', true)
+ON CONFLICT (id) DO UPDATE SET 
+    name = 'images',
+    public = true;
+
 -- 删除已存在的存储策略
 DROP POLICY IF EXISTS "Public can view moment images" ON storage.objects;
 DROP POLICY IF EXISTS "Users can upload moment images" ON storage.objects;
 DROP POLICY IF EXISTS "Users can update own moment images" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete own moment images" ON storage.objects;
+DROP POLICY IF EXISTS "Anonymous can upload moment images" ON storage.objects;
+DROP POLICY IF EXISTS "Anonymous can update moment images" ON storage.objects;
+DROP POLICY IF EXISTS "Anonymous can delete moment images" ON storage.objects;
 DROP POLICY IF EXISTS "Public can view avatars" ON storage.objects;
 DROP POLICY IF EXISTS "Users can upload avatars" ON storage.objects;
 DROP POLICY IF EXISTS "Users can update own avatars" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete own avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Anonymous can upload avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Anonymous can update avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Anonymous can delete avatars" ON storage.objects;
 DROP POLICY IF EXISTS "Public can view disciple badges" ON storage.objects;
 DROP POLICY IF EXISTS "Admin can manage disciple badges" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can manage disciple badges" ON storage.objects;
+DROP POLICY IF EXISTS "Anonymous can manage disciple badges" ON storage.objects;
+DROP POLICY IF EXISTS "Public can view images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can update images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can delete images" ON storage.objects;
+DROP POLICY IF EXISTS "Anonymous can upload images" ON storage.objects;
+DROP POLICY IF EXISTS "Anonymous can update images" ON storage.objects;
+DROP POLICY IF EXISTS "Anonymous can delete images" ON storage.objects;
 
--- 创建朋友圈图片存储策略
+-- 清理所有可能的策略（使用动态SQL）
+DO $$
+DECLARE
+    policy_record RECORD;
+BEGIN
+    FOR policy_record IN
+        SELECT policyname 
+        FROM pg_policies 
+        WHERE schemaname = 'storage' 
+        AND tablename = 'objects'
+        AND (policyname LIKE '%moment%' OR 
+             policyname LIKE '%avatar%' OR 
+             policyname LIKE '%badge%' OR 
+             policyname LIKE '%image%')
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS "' || policy_record.policyname || '" ON storage.objects';
+    END LOOP;
+END $$;
+
+-- 创建朋友圈图片存储策略（允许匿名访问）
 CREATE POLICY "Public can view moment images"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'moments');
 
-CREATE POLICY "Users can upload moment images"
+CREATE POLICY "Anonymous can upload moment images"
 ON storage.objects FOR INSERT
-WITH CHECK (
-    bucket_id = 'moments' AND
-    auth.role() = 'authenticated'
-);
+WITH CHECK (bucket_id = 'moments');
 
-CREATE POLICY "Users can update own moment images"
+CREATE POLICY "Anonymous can update moment images"
 ON storage.objects FOR UPDATE
-USING (
-    bucket_id = 'moments' AND
-    auth.role() = 'authenticated'
-);
+USING (bucket_id = 'moments');
 
-CREATE POLICY "Users can delete own moment images"
+CREATE POLICY "Anonymous can delete moment images"
 ON storage.objects FOR DELETE
-USING (
-    bucket_id = 'moments' AND
-    auth.role() = 'authenticated'
-);
+USING (bucket_id = 'moments');
 
--- 创建用户头像存储策略
+-- 创建用户头像存储策略（允许匿名访问）
 CREATE POLICY "Public can view avatars"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'avatars');
 
-CREATE POLICY "Users can upload avatars"
+CREATE POLICY "Anonymous can upload avatars"
 ON storage.objects FOR INSERT
-WITH CHECK (
-    bucket_id = 'avatars' AND
-    auth.role() = 'authenticated'
-);
+WITH CHECK (bucket_id = 'avatars');
 
-CREATE POLICY "Users can update own avatars"
+CREATE POLICY "Anonymous can update avatars"
 ON storage.objects FOR UPDATE
-USING (
-    bucket_id = 'avatars' AND
-    auth.role() = 'authenticated'
-);
+USING (bucket_id = 'avatars');
 
-CREATE POLICY "Users can delete own avatars"
+CREATE POLICY "Anonymous can delete avatars"
 ON storage.objects FOR DELETE
-USING (
-    bucket_id = 'avatars' AND
-    auth.role() = 'authenticated'
-);
+USING (bucket_id = 'avatars');
 
--- 创建用户组别标识图片策略
+-- 创建用户组别标识图片策略（允许匿名访问）
 CREATE POLICY "Public can view disciple badges"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'disciple-badges');
 
-CREATE POLICY "Admin can manage disciple badges"
+CREATE POLICY "Anonymous can manage disciple badges"
 ON storage.objects FOR ALL
-USING (
-    bucket_id = 'disciple-badges' AND
-    auth.role() = 'service_role'
-);
+USING (bucket_id = 'disciple-badges');
+
+-- 创建朋友圈图片存储策略（允许匿名访问）
+CREATE POLICY "Public can view images"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'images');
+
+CREATE POLICY "Anonymous can upload images"
+ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'images');
+
+CREATE POLICY "Anonymous can update images"
+ON storage.objects FOR UPDATE
+USING (bucket_id = 'images');
+
+CREATE POLICY "Anonymous can delete images"
+ON storage.objects FOR DELETE
+USING (bucket_id = 'images');
 
 -- 创建存储辅助函数
 CREATE OR REPLACE FUNCTION get_moment_image_url(file_path TEXT)
@@ -705,7 +742,7 @@ BEGIN
     -- 检查存储桶数量
     SELECT COUNT(*) INTO bucket_count
     FROM storage.buckets 
-    WHERE id IN ('moments', 'avatars', 'disciple-badges');
+    WHERE id IN ('moments', 'avatars', 'disciple-badges', 'images');
     
     -- 检查策略数量（尽力而为）
     BEGIN
@@ -723,7 +760,7 @@ BEGIN
     RAISE NOTICE '📊 部署统计：';
     RAISE NOTICE '   📋 数据表：%/5 个', table_count;
     RAISE NOTICE '   ⚙️ 函数：%/11 个', function_count;
-    RAISE NOTICE '   🗂️ 存储桶：%/3 个', bucket_count;
+    RAISE NOTICE '   🗂️ 存储桶：%/4 个', bucket_count;
     RAISE NOTICE '   🔒 存储策略：% 个', policy_count;
     RAISE NOTICE '========================================';
     RAISE NOTICE '✅ 核心功能：';
@@ -735,7 +772,7 @@ BEGIN
     RAISE NOTICE '   📊 每日属性统计';
     RAISE NOTICE '========================================';
     
-    IF table_count = 5 AND function_count >= 10 AND bucket_count = 3 THEN
+    IF table_count = 5 AND function_count >= 10 AND bucket_count = 4 THEN
         RAISE NOTICE '🚀 系统部署成功！可以执行测试数据脚本了！';
     ELSE
         RAISE NOTICE '⚠️ 部分功能可能部署不完整，请检查错误信息';
