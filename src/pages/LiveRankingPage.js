@@ -23,6 +23,8 @@ function LiveRankingPage() {
     friendship: []
   });
   const [currentRankingTab, setCurrentRankingTab] = useState(0); // 0-勇气 1-信心 2-智力 3-社牛
+  const [currentPage, setCurrentPage] = useState(0); // 当前页码
+  const [totalPages, setTotalPages] = useState(0); // 总页数
   const rankingTabs = [
     { key: 'courage', label: '勇气', icon: <Zap size={18} style={{ color: '#e74c3c' }} /> },
     { key: 'faith', label: '信心', icon: <Heart size={18} style={{ color: '#f39c12' }} /> },
@@ -30,6 +32,7 @@ function LiveRankingPage() {
     { key: 'friendship', label: '社牛', icon: <UserPlus2 size={18} style={{ color: '#28a745' }} /> },
   ];
   const rankingTabIntervalRef = useRef(null);
+  const pageIntervalRef = useRef(null);
 
   // 定时器引用
   const momentsIntervalRef = useRef(null);
@@ -58,19 +61,46 @@ function LiveRankingPage() {
     };
   }, [isPlaying, todayMoments.length, rankings.courage.length, rankings.faith.length, rankings.wisdom.length, rankings.friendship.length]);
 
-  // 自动切换榜单tab
+  // 自动切换榜单tab和分页
   useEffect(() => {
     if (isPlaying) {
-      rankingTabIntervalRef.current = setInterval(() => {
-        setCurrentRankingTab(prev => (prev + 1) % rankingTabs.length);
-      }, 4000);
+      // 计算当前榜单的总页数
+      const attribute = rankingTabs[currentRankingTab].key;
+      const rankingData = rankings[attribute] || [];
+      const pages = Math.ceil(rankingData.length / 10);
+      setTotalPages(pages);
+      
+      // 如果是社牛榜，只有一页
+      if (attribute === 'friendship') {
+        setCurrentPage(0);
+        // 社牛榜4秒后切换到下一个榜单
+        rankingTabIntervalRef.current = setInterval(() => {
+          setCurrentRankingTab(prev => (prev + 1) % rankingTabs.length);
+          setCurrentPage(0);
+        }, 4000);
+      } else {
+        // 其他榜单先进行分页滚动
+        pageIntervalRef.current = setInterval(() => {
+          setCurrentPage(prev => {
+            const nextPage = prev + 1;
+            if (nextPage >= pages) {
+              // 当前榜单滚动完毕，切换到下一个榜单
+              setCurrentRankingTab(prevTab => (prevTab + 1) % rankingTabs.length);
+              return 0;
+            }
+            return nextPage;
+          });
+        }, 3000); // 每页显示3秒
+      }
     } else {
       if (rankingTabIntervalRef.current) clearInterval(rankingTabIntervalRef.current);
+      if (pageIntervalRef.current) clearInterval(pageIntervalRef.current);
     }
     return () => {
       if (rankingTabIntervalRef.current) clearInterval(rankingTabIntervalRef.current);
+      if (pageIntervalRef.current) clearInterval(pageIntervalRef.current);
     };
-  }, [isPlaying]);
+  }, [isPlaying, currentRankingTab, rankings]);
 
   const fetchData = async () => {
     try {
@@ -98,26 +128,9 @@ function LiveRankingPage() {
 
   // 勇气/信心/智力榜
   const fetchAttributeRanking = async (attribute) => {
-    const { data: topTen, error: topTenError } = await supabase
-      .from('users')
-      .select('id, name, disciple, gender, courage, faith, wisdom, team_group')
-      .gt(attribute, 0)
-      .order(attribute, { ascending: false })
-      .limit(10);
-    if (topTenError) throw topTenError;
-    if (!topTen || topTen.length === 0) {
-      setRankings(prev => ({ ...prev, [attribute]: [] }));
-      return;
-    }
-    if (topTen.length < 10) {
-      setRankings(prev => ({ ...prev, [attribute]: topTen }));
-      return;
-    }
-    const tenthScore = topTen[9][attribute];
     const { data: allData, error } = await supabase
       .from('users')
       .select('id, name, disciple, gender, courage, faith, wisdom, team_group')
-      .gte(attribute, tenthScore)
       .gt(attribute, 0)
       .order(attribute, { ascending: false });
     if (error) throw error;
@@ -145,14 +158,9 @@ function LiveRankingPage() {
       .map(user => ({ ...user, friendCount: friendCounts[user.id] }))
       .filter(user => user.friendCount > 0)
       .sort((a, b) => b.friendCount - a.friendCount);
-    if (friendshipData.length <= 10) {
-      setRankings(prev => ({ ...prev, friendship: friendshipData }));
-      return;
-    }
+    // 只显示前十名
     const topTen = friendshipData.slice(0, 10);
-    const tenthScore = topTen[9].friendCount;
-    const friendshipRanking = friendshipData.filter(user => user.friendCount >= tenthScore);
-    setRankings(prev => ({ ...prev, friendship: friendshipRanking }));
+    setRankings(prev => ({ ...prev, friendship: topTen }));
   };
 
   // 获取榜单显示内容
@@ -374,39 +382,87 @@ function LiveRankingPage() {
                       ))}
                     </div>
                     {/* 榜单内容 */}
-                    <div className="ranking-list-display" style={{ background: 'linear-gradient(135deg, #f8f9ff 0%, #e8eeff 100%)', padding: '12px', borderRadius: '10px', border: '2px solid #667eea', minHeight: '500px', transition: 'all 0.5s ease' }}>
+                    <div className="ranking-list-display" style={{ background: 'linear-gradient(135deg, #f8f9ff 0%, #e8eeff 100%)', padding: '12px', borderRadius: '10px', border: '2px solid #667eea', height: '600px', transition: 'all 0.5s ease', overflow: 'hidden' }}>
                       {(() => {
                         const attribute = rankingTabs[currentRankingTab].key;
                         const rankingData = rankings[attribute] || [];
                         if (rankingData.length === 0) {
-                          return <div className="text-center" style={{ padding: '2rem', color: '#666' }}><BarChart3 size={40} style={{ margin: '0 auto 0.8rem', opacity: 0.3 }} /><p style={{ margin: 0, fontSize: '14px' }}>暂无{getAttributeName(attribute)}排名数据</p></div>;
+                          return <div className="text-center" style={{ padding: '2rem', color: '#666', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}><BarChart3 size={40} style={{ margin: '0 auto 0.8rem', opacity: 0.3 }} /><p style={{ margin: 0, fontSize: '14px' }}>暂无{getAttributeName(attribute)}排名数据</p></div>;
                         }
-                        return rankingData.slice(0, 10).map((user, index) => {
-                          const rank = index + 1;
-                          return (
-                            <div key={user.id} style={{ display: 'flex', alignItems: 'center', padding: '8px', marginBottom: '8px', background: rank <= 3 ? 'rgba(102, 126, 234, 0.1)' : 'white', borderRadius: '8px', border: rank <= 3 ? '1px solid #667eea' : '1px solid #e9ecef', transition: 'all 0.3s ease' }}>
-                              <div style={{ minWidth: '32px', textAlign: 'center', marginRight: '8px' }}>
-                                {rank <= 3 ? getRankIcon(rank) : <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>{rank}</span>}
-                              </div>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#333', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {user.name}
-                                  {/* 新增小组显示 */}
-                                  {user.team_group && (
-                                    <span style={{ color: '#667eea', fontSize: '12px', marginLeft: '8px' }}>
-                                      第{user.team_group}组
-                                    </span>
-                                  )}
+                        
+                        // 计算当前页的数据
+                        const startIndex = currentPage * 10;
+                        const endIndex = startIndex + 10;
+                        const currentPageData = rankingData.slice(startIndex, endIndex);
+                        
+                        return (
+                          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            {/* 分页指示器 */}
+                            {attribute !== 'friendship' && totalPages > 1 && (
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'center', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                marginBottom: '12px',
+                                padding: '8px',
+                                background: 'rgba(102, 126, 234, 0.1)',
+                                borderRadius: '8px',
+                                flexShrink: 0
+                              }}>
+                                <span style={{ fontSize: '12px', color: '#667eea', fontWeight: 'bold' }}>
+                                  第 {currentPage + 1} / {totalPages} 页
+                                </span>
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  {Array.from({ length: totalPages }, (_, i) => (
+                                    <div key={i} style={{
+                                      width: '8px',
+                                      height: '8px',
+                                      borderRadius: '50%',
+                                      background: i === currentPage ? '#667eea' : '#ddd',
+                                      transition: 'all 0.3s ease'
+                                    }} />
+                                  ))}
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.disciple}</div>
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '16px', fontWeight: 'bold', color: rank <= 3 ? '#667eea' : '#333' }}>
-                                {getAttributeValue(user, attribute)}
-                                {getAttributeIcon(attribute)}
-                              </div>
+                            )}
+                            
+                            {/* 榜单列表容器 */}
+                            <div style={{ flex: 1, overflow: 'hidden' }}>
+                              {currentPageData.map((user, index) => {
+                                const globalRank = startIndex + index + 1;
+                                return (
+                                  <div key={user.id} style={{ display: 'flex', alignItems: 'center', padding: '8px', marginBottom: '8px', background: globalRank <= 3 ? 'rgba(102, 126, 234, 0.1)' : 'white', borderRadius: '8px', border: globalRank <= 3 ? '1px solid #667eea' : '1px solid #e9ecef', transition: 'all 0.3s ease', height: '44px' }}>
+                                    <div style={{ minWidth: '32px', textAlign: 'center', marginRight: '8px' }}>
+                                      {globalRank <= 3 ? getRankIcon(globalRank) : <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>{globalRank}</span>}
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#333', marginBottom: '2px', wordBreak: 'break-word', lineHeight: '1.2' }}>
+                                        {user.name}
+                                        {/* 新增小组显示 */}
+                                        {user.team_group && (
+                                          <span style={{ color: '#667eea', fontSize: '12px', marginLeft: '8px' }}>
+                                            第{user.team_group}组
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div style={{ fontSize: '11px', color: '#666', wordBreak: 'break-word', lineHeight: '1.1' }}>{user.disciple}</div>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '16px', fontWeight: 'bold', color: globalRank <= 3 ? '#667eea' : '#333' }}>
+                                      {getAttributeValue(user, attribute)}
+                                      {getAttributeIcon(attribute)}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              
+                              {/* 填充空白区域，确保高度一致 */}
+                              {Array.from({ length: Math.max(0, 10 - currentPageData.length) }, (_, index) => (
+                                <div key={`empty-${index}`} style={{ height: '44px', marginBottom: '8px' }} />
+                              ))}
                             </div>
-                          );
-                        });
+                          </div>
+                        );
                       })()}
                     </div>
                   </div>
@@ -440,25 +496,24 @@ function LiveRankingPage() {
                     </div>
 
                     {todayMoments.length === 0 ? (
-                      <div className="text-center" style={{ padding: '2rem', color: '#666' }}>
+                      <div className="text-center" style={{ padding: '1rem', color: '#666' }}>
                         <MessageCircle size={40} style={{ margin: '0 auto 0.8rem', opacity: 0.3 }} />
                         <p style={{ margin: 0, fontSize: '14px' }}>今天还没有朋友圈动态</p>
                       </div>
                     ) : (
                       <div className="moment-display" style={{
                         background: 'linear-gradient(135deg, #f8fff8 0%, #e8ffe8 100%)',
-                        padding: '20px',
+                        padding: '10px',
                         borderRadius: '12px',
                         border: '2px solid #28a745',
-                        minHeight: '500px',
-                        height: 'fit-content',
+                        height: '650px',
                         transition: 'all 0.5s ease'
                       }}>
                         <div className="moment-header" style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          marginBottom: '16px'
+                          marginBottom: '10px'
                         }}>
                           <div className="moment-title" style={{
                             fontSize: '22px',
@@ -466,7 +521,9 @@ function LiveRankingPage() {
                             color: '#333',
                             lineHeight: '1.4',
                             flex: 1,
-                            marginRight: '12px'
+                            marginRight: '12px',
+                            wordBreak: 'break-word',
+                            wordWrap: 'break-word'
                           }}>
                             {currentMoment.title}
                           </div>
@@ -488,8 +545,11 @@ function LiveRankingPage() {
                           <div className="moment-content" style={{
                             fontSize: '16px',
                             color: '#555',
-                            lineHeight: '1.6',
-                            marginBottom: '16px'
+                            lineHeight: '1.4',
+                            marginBottom: '6px',
+                            padding: '0 10px',
+                            wordBreak: 'break-word',
+                            wordWrap: 'break-word'
                           }}>
                             {currentMoment.content}
                           </div>
@@ -528,19 +588,23 @@ function LiveRankingPage() {
                         {currentMoment.mentioned_users.length > 0 && (
                           <div className="mentions" style={{
                             display: 'flex',
-                            alignItems: 'center',
+                            alignItems: 'flex-start',
                             gap: '6px',
                             marginTop: '10px',
                             fontSize: '12px',
-                            color: '#666'
+                            color: '#666',
+                            flexWrap: 'wrap',
+                            wordBreak: 'break-word'
                           }}>
-                            <span>@</span>
-                            {currentMoment.mentioned_users.map((user, index) => (
-                              <span key={user.id}>
-                                {user?.name || '未知用户'}
-                                {index < currentMoment.mentioned_users.length - 1 && '、'}
-                              </span>
-                            ))}
+                            <span style={{ flexShrink: 0 }}>@</span>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                              {currentMoment.mentioned_users.map((user, index) => (
+                                <span key={user.id}>
+                                  {user?.name || '未知用户'}
+                                  {index < currentMoment.mentioned_users.length - 1 && '、'}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
