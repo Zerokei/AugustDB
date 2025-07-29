@@ -88,7 +88,7 @@ export const DISCIPLE_CONFIG = {
     primaryAttribute: 'faith',
     initialValues: {
       courage: 0,
-      faith: 9,
+      faith: 0,
       wisdom: 0
     }
   },
