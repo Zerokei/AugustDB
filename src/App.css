@@ -747,6 +747,12 @@
   margin-top: 0.5rem;
 }
 
+.mention-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .mention-btn {
   display: flex;
   align-items: center;
@@ -764,6 +770,17 @@
 .mention-btn:hover {
   background: #e9ecef;
   border-color: #667eea;
+}
+
+.group-mention-btn {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #1976d2;
+}
+
+.group-mention-btn:hover {
+  background: #bbdefb;
+  border-color: #1976d2;
 }
 
 .mention-dropdown {
@@ -822,6 +839,109 @@
   color: #666;
 }
 
+/* 小组@功能样式 */
+.group-mention-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  max-height: 300px;
+  overflow: hidden;
+  animation: dropdownSlide 0.2s ease-out;
+}
+
+.group-mention-header {
+  padding: 1rem;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.group-mention-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.group-mention-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.group-mention-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f3f4;
+  transition: background-color 0.2s ease;
+}
+
+.group-mention-item:hover {
+  background: #f8f9fa;
+}
+
+.group-mention-item.fully-mentioned {
+  background: #e8f5e8;
+  border-left: 3px solid #4caf50;
+}
+
+.group-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.group-number {
+  font-weight: 600;
+  color: #333;
+}
+
+.group-count {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.group-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-group-btn,
+.remove-group-btn {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-group-btn {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #1976d2;
+}
+
+.add-group-btn:hover {
+  background: #bbdefb;
+}
+
+.remove-group-btn {
+  background: #ffebee;
+  border-color: #f44336;
+  color: #d32f2f;
+}
+
+.remove-group-btn:hover {
+  background: #ffcdd2;
+}
+
 .mentioned-users {
   display: flex;
   flex-wrap: wrap;
@@ -838,6 +958,12 @@
   color: #4338ca;
   border-radius: 16px;
   font-size: 0.8rem;
+}
+
+.user-detail {
+  font-size: 0.7rem;
+  color: #6b7280;
+  margin-left: 4px;
 }
 
 .mentioned-user button {
@@ -1000,6 +1126,19 @@
   
   .moment-time {
     align-self: flex-end;
+  }
+
+  .mention-buttons {
+    flex-direction: column;
+  }
+
+  .group-mention-dropdown {
+    position: fixed;
+    top: 50%;
+    left: 1rem;
+    right: 1rem;
+    transform: translateY(-50%);
+    max-height: 70vh;
   }
 }
 

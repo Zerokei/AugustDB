@@ -12,7 +12,8 @@ import {
   X,
   Image as ImageIcon,
   MessageCircle,
-  Clock
+  Clock,
+  Users
 } from 'lucide-react';
 import PagePasswordGuard from '../components/PagePasswordGuard';
 
@@ -36,6 +37,10 @@ function MomentsPageSimple() {
   // @用户相关状态
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionFilter, setMentionFilter] = useState('');
+  
+  // 小组@功能相关状态
+  const [showGroupMentionDropdown, setShowGroupMentionDropdown] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState('');
 
   useEffect(() => {
     fetchInitialData();
@@ -58,7 +63,7 @@ function MomentsPageSimple() {
   const fetchUsers = async () => {
     const { data, error } = await supabase
       .from('users')
-      .select('id, name, disciple, gender')
+      .select('id, name, disciple, gender, team_group')
       .order('name');
     
     if (error) throw error;
@@ -238,6 +243,64 @@ function MomentsPageSimple() {
       ...prev,
       mentionedUsers: prev.mentionedUsers.filter(u => u.id !== userId)
     }));
+  };
+
+  // 一键@小组所有成员
+  const handleMentionGroup = (groupNumber) => {
+    const groupUsers = users.filter(user => user.team_group === groupNumber);
+    const newMentionedUsers = [...formData.mentionedUsers];
+    
+    groupUsers.forEach(user => {
+      if (!newMentionedUsers.find(u => u.id === user.id)) {
+        newMentionedUsers.push(user);
+      }
+    });
+    
+    setFormData(prev => ({
+      ...prev,
+      mentionedUsers: newMentionedUsers
+    }));
+    
+    setSelectedGroup(groupNumber);
+    setShowGroupMentionDropdown(false);
+    
+    setMessage({ 
+      type: 'success', 
+      text: `已@第${groupNumber}组的所有成员（${groupUsers.length}人）` 
+    });
+  };
+
+  // 移除小组所有成员
+  const removeGroupMentions = (groupNumber) => {
+    const groupUsers = users.filter(user => user.team_group === groupNumber);
+    const groupUserIds = groupUsers.map(user => user.id);
+    
+    setFormData(prev => ({
+      ...prev,
+      mentionedUsers: prev.mentionedUsers.filter(u => !groupUserIds.includes(u.id))
+    }));
+    
+    setMessage({ 
+      type: 'info', 
+      text: `已移除第${groupNumber}组的所有成员` 
+    });
+  };
+
+  // 获取所有小组号（1-10）
+  const getAllGroups = () => {
+    return Array.from({ length: 10 }, (_, i) => i + 1);
+  };
+
+  // 获取某个小组的成员数量
+  const getGroupMemberCount = (groupNumber) => {
+    return users.filter(user => user.team_group === groupNumber).length;
+  };
+
+  // 检查某个小组是否已被完全@
+  const isGroupFullyMentioned = (groupNumber) => {
+    const groupUsers = users.filter(user => user.team_group === groupNumber);
+    const mentionedUserIds = formData.mentionedUsers.map(u => u.id);
+    return groupUsers.every(user => mentionedUserIds.includes(user.id));
   };
 
   const uploadImage = async (file) => {
@@ -423,15 +486,27 @@ function MomentsPageSimple() {
                   <div className="form-group">
                     <label className="form-label">@朋友</label>
                     <div className="mention-section">
-                      <button
-                        type="button"
-                        onClick={() => setShowMentionDropdown(!showMentionDropdown)}
-                        className="mention-btn"
-                        disabled={uploading}
-                      >
-                        <AtSign size={20} />
-                        添加@用户
-                      </button>
+                      <div className="mention-buttons">
+                        <button
+                          type="button"
+                          onClick={() => setShowMentionDropdown(!showMentionDropdown)}
+                          className="mention-btn"
+                          disabled={uploading}
+                        >
+                          <AtSign size={20} />
+                          添加@用户
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowGroupMentionDropdown(!showGroupMentionDropdown)}
+                          className="mention-btn group-mention-btn"
+                          disabled={uploading}
+                        >
+                          <Users size={20} />
+                          一键@小组
+                        </button>
+                      </div>
 
                       {showMentionDropdown && (
                         <div className="mention-dropdown">
@@ -450,9 +525,57 @@ function MomentsPageSimple() {
                                 className="mention-item"
                               >
                                 <span>{user.name}</span>
-                                <span className="mention-detail">{user.disciple}</span>
+                                <span className="mention-detail">{user.disciple} · 第{user.team_group}组</span>
                               </div>
                             ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {showGroupMentionDropdown && (
+                        <div className="mention-dropdown group-mention-dropdown">
+                          <div className="group-mention-header">
+                            <h4>选择小组一键@所有成员</h4>
+                          </div>
+                          <div className="group-mention-list">
+                            {getAllGroups().map(groupNumber => {
+                              const memberCount = getGroupMemberCount(groupNumber);
+                              const isFullyMentioned = isGroupFullyMentioned(groupNumber);
+                              const hasMembers = memberCount > 0;
+                              
+                              return hasMembers ? (
+                                <div
+                                  key={groupNumber}
+                                  className={`group-mention-item ${isFullyMentioned ? 'fully-mentioned' : ''}`}
+                                >
+                                  <div className="group-info">
+                                    <span className="group-number">第{groupNumber}组</span>
+                                    <span className="group-count">({memberCount}人)</span>
+                                  </div>
+                                  <div className="group-actions">
+                                    {isFullyMentioned ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => removeGroupMentions(groupNumber)}
+                                        className="remove-group-btn"
+                                        disabled={uploading}
+                                      >
+                                        移除小组
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMentionGroup(groupNumber)}
+                                        className="add-group-btn"
+                                        disabled={uploading}
+                                      >
+                                        添加小组
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : null;
+                            })}
                           </div>
                         </div>
                       )}
@@ -463,6 +586,7 @@ function MomentsPageSimple() {
                         {formData.mentionedUsers.map(user => (
                           <div key={user.id} className="mentioned-user">
                             <span>@{user.name}</span>
+                            <span className="user-detail">第{user.team_group}组</span>
                             <button
                               type="button"
                               onClick={() => removeMentionedUser(user.id)}
