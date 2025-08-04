@@ -156,7 +156,7 @@ CREATE INDEX idx_friendships_user2 ON friendships(user2_id);
 CREATE INDEX idx_friendships_created_at ON friendships(created_at);
 
 -- ================================================================
--- 第六步：创建朋友圈时刻表
+-- 第六步：创建照片墙时刻表
 -- ================================================================
 
 CREATE TABLE moments (
@@ -535,7 +535,7 @@ $$ LANGUAGE plpgsql;
 -- 第十三步：创建存储桶和存储函数
 -- ================================================================
 
--- 创建朋友圈图片存储桶
+-- 创建照片墙图片存储桶
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('moments', 'moments', true)
 ON CONFLICT (id) DO UPDATE SET 
@@ -556,7 +556,7 @@ ON CONFLICT (id) DO UPDATE SET
     name = 'disciple-badges',
     public = true;
 
--- 创建朋友圈图片存储桶（用于前端上传）
+-- 创建照片墙图片存储桶（用于前端上传）
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('images', 'images', true)
 ON CONFLICT (id) DO UPDATE SET 
@@ -609,7 +609,7 @@ BEGIN
     END LOOP;
 END $$;
 
--- 创建朋友圈图片存储策略（允许匿名访问）
+-- 创建照片墙图片存储策略（允许匿名访问）
 CREATE POLICY "Public can view moment images"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'moments');
@@ -652,7 +652,7 @@ CREATE POLICY "Anonymous can manage disciple badges"
 ON storage.objects FOR ALL
 USING (bucket_id = 'disciple-badges');
 
--- 创建朋友圈图片存储策略（允许匿名访问）
+-- 创建照片墙图片存储策略（允许匿名访问）
 CREATE POLICY "Public can view images"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'images');
@@ -768,7 +768,7 @@ BEGIN
     RAISE NOTICE '   ⚔️ 勇气用户：彼得(10)、雅各（西庇太）(9)、西门（奋锐党）(10)、巴多罗买(9)';
     RAISE NOTICE '   🙏 信心用户：多马(9)、安德烈(10)、达太(8)、雅各（亚勒腓）(9)';
     RAISE NOTICE '   🤝 单向朋友关系系统';
-    RAISE NOTICE '   📱 朋友圈图片上传';
+    RAISE NOTICE '   📱 照片墙图片上传';
     RAISE NOTICE '   📊 每日属性统计';
     RAISE NOTICE '========================================';
     
@@ -786,7 +786,7 @@ BEGIN
 END $$; 
 
 -- ================================================================
--- 第十五步：创建朋友圈时刻函数
+-- 第十五步：创建照片墙时刻函数
 -- ================================================================
 
 CREATE OR REPLACE FUNCTION create_moment(

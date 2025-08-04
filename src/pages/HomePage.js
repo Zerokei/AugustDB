@@ -229,7 +229,7 @@ function HomePage({ onLogout }) {
             
                       <Link to="/moments" className="btn btn-secondary">
             <MessageCircle size={20} />
-            朋友圈
+            照片墙（内部）
           </Link>
           
           {onLogout && (

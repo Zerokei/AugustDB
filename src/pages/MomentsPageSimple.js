@@ -125,7 +125,7 @@ function MomentsPageSimple() {
 
       setMoments(momentsWithMentions);
     } catch (error) {
-      setMessage({ type: 'error', text: '获取朋友圈数据失败：' + error.message });
+      setMessage({ type: 'error', text: '获取照片墙数据失败：' + error.message });
     } finally {
       setLoading(false);
     }
@@ -352,7 +352,7 @@ function MomentsPageSimple() {
 
       if (error) throw error;
 
-      setMessage({ type: 'success', text: '朋友圈动态发布成功！' });
+      setMessage({ type: 'success', text: '照片墙动态发布成功！' });
       
       // 重置表单
       setFormData({
@@ -400,7 +400,7 @@ function MomentsPageSimple() {
           <div className="header">
             <h1>
               <MessageCircle size={32} />
-              朋友圈
+              照片墙（内部）
             </h1>
             <p>分享你的精彩时刻</p>
           </div>
@@ -641,13 +641,13 @@ function MomentsPageSimple() {
             )}
           </div>
 
-          {/* 朋友圈动态列表 */}
+          {/* 照片墙动态列表 */}
           <div className="moments-list">
             {loading ? (
               <div className="text-center">
                 <div className="loading">
                   <div className="spinner"></div>
-                  正在加载朋友圈...
+                  正在加载照片墙...
                 </div>
               </div>
             ) : moments.length === 0 ? (

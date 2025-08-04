@@ -287,7 +287,7 @@ INSERT INTO friendships (user1_id, user2_id, notes) VALUES
 );
 
 -- ================================================================
--- 第五步：生成朋友圈时刻数据
+-- 第五步：生成照片墙时刻数据
 -- ================================================================
 
 INSERT INTO moments (user_id, title, content, image_url) VALUES
@@ -357,7 +357,7 @@ INSERT INTO moments (user_id, title, content, image_url) VALUES
 -- 第六步：生成@提及数据
 -- ================================================================
 
--- 为朋友圈时刻添加@提及
+-- 为照片墙时刻添加@提及
 INSERT INTO moment_mentions (moment_id, mentioned_user_id) VALUES
 -- 智力用户互相@
 (
@@ -422,7 +422,7 @@ BEGIN
     RAISE NOTICE '   ⚔️ 勇气用户：% 人', courage_count;
     RAISE NOTICE '   🙏 信心用户：% 人', faith_count;
     RAISE NOTICE '   🤝 朋友关系：% 对', friendship_count;
-    RAISE NOTICE '   📱 朋友圈：% 条', moment_count;
+    RAISE NOTICE '   📱 照片墙：% 条', moment_count;
     RAISE NOTICE '========================================';
     RAISE NOTICE '✅ 用户分组规则验证：';
     RAISE NOTICE '   - 智力用户只有智力属性';
